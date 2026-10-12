@@ -621,7 +621,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     ovB.textContent='もう一回遊ぶ';ov.hidden=false;skillBtn();
     if(win){fanfare()}else{tone(330,.2,'triangle');tone(247,.45,'triangle',.07,.2)}
     sync();draw()}
-  function die(){hs=null;tf=null;tstop=0;balls=[];miss++;lives--;flash=.25;burst(pl.x+pl.w/2,pl.y+pl.h/2,'#ff7b87',15);cue('damage');skillBtn();if(lives<=0){end(false);return}spawn();startLumps();inv=1.5;shots=[];if(bossUp()){var bb=en.filter(function(q){return q.boss})[0];bb.ph2='hover';bb.pt=0;bb.cd=2;say('ボスの手前から再開!',0,1,'#2f9a7a')}}
+  function die(){hs=null;tf=null;tstop=0;balls=[];miss++;lives--;flash=.25;burst(pl.x+pl.w/2,pl.y+pl.h/2,'#ff7b87',15);cue('damage');skillBtn();if(lives<=0){end(false);return}spawn();startLumps();inv=1.5;shots=[];var bb=en.filter(function(q){return q.boss&&q.met})[0];if(bb){bb.ph2='hover';bb.pt=0;bb.cd=2;say('ボスの手前から再開!',0,1,'#2f9a7a')}}
   function hurt(){hurtT=.8;
     if(cloneGuard())return;
     if(shield){shield=0;inv=1.3;flash=.1;pl.vy=-8.4;pl.vx=-pl.f*3.7;say('シールド!',0,1,'#4fa8ff');tone(900,.1,'triangle');tone(1200,.12,'triangle',.05,.08);burst(pl.x+pl.w/2,pl.y+pl.h/2,'#bfe6ff',16);return}
@@ -728,7 +728,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
       if(tf.t<=0){burst(pl.x+pl.w/2,pl.y+pl.h/2,'#555',30);end(false,'燃えつきた…','ファイヤーまりもは30秒以内にゴールしないと燃えつきてしまう。');return}}
     var stopped=tstop>0;if(stopped)tstop-=dt;
     for(i=en.length-1;i>=0;i--){n=en[i];
-      if(!n.on){if(n.boss?Math.abs(n.x-pl.x)<VW:(n.x<cam+VW+.3&&n.x+n.w>cam-.3)||(n.k==='p'&&n.x<cam+VW+3)){n.on=true;if(!n.boss&&n.k!=='p')n.wake=.1}else continue}
+      if(!n.on){if(n.boss?(n.x+n.w/2-pl.x-pl.w/2<9&&n.x<cam+VW-.5):(n.x<cam+VW+.3&&n.x+n.w>cam-.3)||(n.k==='p'&&n.x<cam+VW+3)){n.on=true;if(!n.boss&&n.k!=='p')n.wake=.1}else continue}
       if(!stopped){if(n.wake>0){n.wake-=dt;n.t+=dt}else ai(n,dt)}
       if(!n.seen&&!n.hide&&n.x+n.w>cam&&n.x<cam+VW&&n.y+n.h>camY&&n.y<camY+VH){n.seen=1;if(opts.onSee)opts.onSee(n.k)}
       if(n.dead||n.y>H+2||n.x<-3||n.x>W+3){en.splice(i,1);continue}
