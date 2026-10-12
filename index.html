@@ -70,9 +70,17 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
 .cbest{font-size:11.5px;color:var(--sub)}
 
 /* play */
-#s-play .bar{margin-bottom:6px}
-#p-name{font-size:18px}
-#stage .nc-body{padding:0}
+#s-play:not([hidden]){position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;background:#173A3A;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+#s-play .bar{display:none}
+#stage{flex:1;min-height:0;display:flex;flex-direction:column;background:#173A3A}
+#stage>*{flex:1;min-height:0;display:flex;flex-direction:column;background:transparent}
+#stage .nc-body{flex:1;min-height:0;width:100%;max-width:none;padding:0;gap:0}
+#stage .nc-view{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;border:0;border-radius:0;box-shadow:none;background:#173A3A}
+#stage .nc-cv{flex:none;max-width:100%;max-height:100%}
+#stage .nc-keys{flex:none;max-width:none;margin:0;padding:12px max(14px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));background:#21504a}
+#stage .nc-keys>div{display:flex;gap:12px;align-items:center}
+#stage .nc-keys .nc-mini{min-width:76px;min-height:68px;font-size:26px}
+#stage .nc-keys .nc-jump{min-width:120px;font-size:20px}
 .result{position:fixed;inset:0;background:rgba(12,40,40,.55);display:grid;place-items:center;padding:16px;z-index:50}
 .result[hidden]{display:none}
 .rcard{background:#fff;border-radius:24px;padding:22px;width:min(100%,460px);max-height:92vh;overflow:auto;text-align:center;box-shadow:0 20px 50px #0b2f2a55}
@@ -155,14 +163,13 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
           <span class="chip">💧 しずく貯金 <b id="t-bank"></b></span>
           <span class="chip">★ <b id="t-stars"></b></span>
           <span class="chip">🌈 図鑑 <b id="t-dex"></b></span>
-          <button type="button" class="chip" id="b-snd" style="border:0;cursor:pointer"></button>
         </div>
       </div>
       <div id="t-hero"></div>
     </div>
     <div class="menu">
       <button type="button" class="go" id="b-play"><b>ぼうけんへ</b><span>5つのワールド・50コース</span></button>
-      <button type="button" id="b-dex"><b>虹まりも図鑑</b><span>変身した虹まりもが棚に並ぶ</span></button>
+      <button type="button" id="b-dex"><b>図鑑</b><span>虹まりもと敵キャラが棚に並ぶ</span></button>
       <button type="button" id="b-shop"><b>ごほうび屋</b><span>しずくで色や強化と交換</span></button>
     </div>
   </section>
@@ -236,6 +243,11 @@ var APP_CSS = `
 .nc-edit .nc-cv{max-width:none}
 .nc-ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px;background:linear-gradient(180deg,#0c3b3b45,#092d345e);color:#fff}
 .nc-ov[hidden]{display:none}
+.nc-pz{position:absolute;top:10px;right:10px;z-index:3;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.82);color:#24694e;font-weight:900;font-size:16px;box-shadow:0 3px 0 #0002;touch-action:none}
+.nc-pzp{position:absolute;inset:0;z-index:4;display:grid;place-items:center;background:rgba(10,40,40,.55)}
+.nc-pzp[hidden]{display:none}
+.nc-pzin{display:flex;flex-direction:column;gap:10px;background:#fff;border-radius:20px;padding:18px 22px;min-width:220px;text-align:center;box-shadow:0 14px 30px #0004}
+.nc-pzin b{font-size:20px;color:#1b6349}
 .nc-ov h2{font-size:clamp(22px,5.5vw,40px);line-height:1.2;margin:0;text-shadow:0 3px 10px #073b35}
 .nc-ov p{max-width:460px;margin:0 0 8px;font-weight:600;line-height:1.65;text-shadow:0 2px 5px #073b35}
 .nc-btn{font:inherit;font-weight:750;font-size:18px;background:var(--a);color:var(--on);border:0;border-radius:13px;padding:12px 28px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.28)}
@@ -264,8 +276,8 @@ function game(cfg, root, opts){
   if(cfg.name&&!opts.bare&&!edit){var tt=h('div','nc-title'),tw=h('div',null,cfg.name);tt.appendChild(h('i','nc-mark'));tw.appendChild(h('small',null,'まりもメーカーで作ったコース'));tt.appendChild(tw);root.appendChild(tt)}
   var body=h('div','nc-body');root.appendChild(body);
   var S=Math.min(2,window.devicePixelRatio||1),T=Math.round(32*S),u=T/32;
-  var VW=edit?W:Math.min(W,Math.max(9,Math.min(20,Math.round((body.clientWidth||384)/42))));
-  var VH=opts.app?Math.min(H,12):H,BO=opts.boost||{},SKIN=opts.skin||null;
+  var VW=edit?W:opts.app?Math.min(W,Math.max(9,Math.min(20,Math.round((window.innerWidth||390)/Math.max(200,(window.innerHeight||700)-100)*12)))):Math.min(W,Math.max(9,Math.min(20,Math.round((body.clientWidth||384)/42))));
+  var VH=opts.app?Math.min(H,Math.max(12,Math.round(VW*Math.max(200,(window.innerHeight||700)-100)/(window.innerWidth||390)))):H,BO=opts.boost||{},SKIN=opts.skin||null;
 
   /* HUD */
   var hud=h('div','nc-hud');
@@ -304,6 +316,15 @@ function game(cfg, root, opts){
   var ov=h('div','nc-ov'),ovT=h('h2'),ovP=h('p'),ovB=h('button','nc-btn','冒険スタート');ovB.type='button';
   ov.appendChild(ovT);ov.appendChild(ovP);ov.appendChild(ovB);
   view.appendChild(cv);if(!edit)view.appendChild(ov);
+  var pzB=null,pzP=null,paused=false;
+  if(opts.app){pzB=h('button','nc-pz','Ⅱ');pzB.type='button';pzB.setAttribute('aria-label','ポーズ');view.appendChild(pzB);
+    pzP=h('div','nc-pzp');pzP.hidden=true;var pzIn=h('div','nc-pzin');pzIn.appendChild(h('b',null,'ポーズ'));
+    [['つづける',function(){resume()}],['やりなおす',function(){pzP.hidden=true;paused=false;go()}],['コースをえらぶ',function(){pzP.hidden=true;paused=false;if(opts.onQuit)opts.onQuit()}]].forEach(function(q){var b=h('button','nc-btn',q[0]);b.type='button';b.onclick=q[1];pzIn.appendChild(b)});
+    pzP.appendChild(pzIn);view.appendChild(pzP);
+    pzB.onpointerdown=function(e){e.preventDefault();e.stopPropagation();if(state!=='play')return;paused=true;state='pause';L=R=J=false;pzP.hidden=false}}
+  function resume(){if(!paused)return;paused=false;pzP.hidden=true;state='play';last=performance.now();acc=0;requestAnimationFrame(frame);nextT=0;bgmPump()}
+  function fitView(){if(!opts.app||!alive)return;var aw=view.clientWidth,ah=view.clientHeight;if(!aw||!ah)return;var k=Math.min(aw/cv.width,ah/cv.height);cv.style.width=Math.floor(cv.width*k)+'px';cv.style.height=Math.floor(cv.height*k)+'px'}
+  if(opts.app){window.addEventListener('resize',fitView);requestAnimationFrame(function(){fitView();requestAnimationFrame(fitView)})}
 
   var kamiT=0,kamiOn=false,bossIntro=0,camY=0,shots=[],goals=[],hs=null,hurtT=0,tf=null,frz=null,tstop=0,balls=[],stars=[],mg=[],trail=[],shake=0;
   var grid,pl,st0,en,fx,sp,score,lives,coins,coinsAll,left,sec,miss,state,hasGoal,cam,inv,flash,tacc,acc,last,pj,hudS='',best=0,el=0;
@@ -337,8 +358,8 @@ function game(cfg, root, opts){
   function cue(n){var c=CUES[n],d=0;c[1].forEach(function(nt){tone(nt[0],nt[1]+.03,c[0],.07,d);d+=nt[1]})}
   function fanfare(){var d=0;GOAL.forEach(function(nt){tone(nt[0],nt[1]+.05,'sine',.07,d);tone(nt[0]*.75,nt[1]+.05,'triangle',.04,d);d+=nt[1]})}
   var mute=false,AC=null,bgT=0,bi=0,MEL=[523.25,659.25,783.99,659.25,587.33,659.25,523.25,392,440,523.25,659.25,523.25,440,392,329.63,392];
-  try{mute=localStorage.getItem('marimo-mute')==='1'}catch(e){}
-  function aud(){if(edit)return;try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}try{AC=window.__mmAC||(window.__mmAC=new(window.AudioContext||window.webkitAudioContext)());if(AC.state==='suspended')AC.resume()}catch(e){AC=null}}
+  if(!opts.app)try{mute=localStorage.getItem('marimo-mute')==='1'}catch(e){}
+  function aud(){if(edit)return;try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}try{AC=window.__mmAC||(window.__mmAC=new(window.AudioContext||window.webkitAudioContext)());if(AC.state==='suspended')AC.resume()}catch(e){AC=null}}
   function tone(f,d,w,v,dl){if(mute||!AC||!alive)return;try{var t0=AC.currentTime+(dl||0),o=AC.createOscillator(),g=AC.createGain();o.type=w||'sine';o.frequency.value=f;
     g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(v||.07,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+d+.03)}catch(e){}}
   var nextT=0;
@@ -955,7 +976,8 @@ function game(cfg, root, opts){
     if(!(inv>0&&!frz&&Math.floor(inv*12)%2))hero();
     if(hs)scissors();
     cx.restore();
-    if(!edit&&cfg.name){cx.font='bold '+Math.round(14*u)+'px system-ui,sans-serif';var tw=cx.measureText(cfg.name+'  ✦').width,gg=cx.createLinearGradient(12*u,0,tw+60*u,0);
+    if(opts.app&&!edit){var hs3='ステージ'+(cfg.name||'').split(' ')[0]+'    ❤️'+lives+'  💧'+(coinsAll-coins)+'/'+coinsAll;cx.font='bold '+Math.round(15*u)+'px system-ui,sans-serif';var hw=cx.measureText(hs3).width;rr(10*u,10*u,hw+28*u,32*u,16*u,'rgba(255,255,255,.82)');cx.fillStyle='#24694e';cx.textAlign='left';cx.textBaseline='middle';cx.fillText(hs3,24*u,26.5*u)}
+    else if(!edit&&cfg.name){cx.font='bold '+Math.round(14*u)+'px system-ui,sans-serif';var tw=cx.measureText(cfg.name+'  ✦').width,gg=cx.createLinearGradient(12*u,0,tw+60*u,0);
       gg.addColorStop(0,'#ffffffc9');gg.addColorStop(1,'#ffffff00');rr(12*u,10*u,tw+56*u,34*u,14*u,gg);cx.fillStyle='#24694e';cx.textAlign='left';cx.textBaseline='alphabetic';cx.fillText(cfg.name+'  ✦',24*u,32*u)}
     if(bossIntro>0){var bk=Math.min(1,(2.4-bossIntro)*4),bb2=en.filter(function(q){return q.boss})[0];cx.save();cx.globalAlpha=Math.min(1,bossIntro*2);cx.fillStyle='rgba(10,20,40,.55)';cx.fillRect(0,chh*.32,cw,chh*.36);
       cx.font='900 '+Math.round(44*u*bk)+'px system-ui,sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.lineWidth=8*u;cx.strokeStyle='#fff';cx.strokeText('ボス出現ッ!!',cw/2+(Math.random()-.5)*6*u,chh*.46);cx.fillStyle='#e8404a';cx.fillText('ボス出現ッ!!',cw/2,chh*.46);
@@ -994,9 +1016,9 @@ function game(cfg, root, opts){
   else{
     var keys=h('div','nc-keys'),g1=h('div'),g2=h('div');
     g1.appendChild(hold('◀','左へ','',function(v){L=v}));g1.appendChild(hold('▶','右へ','',function(v){R=v}));
-    g2.appendChild(kb);g2.appendChild(hold('ジャンプ! ↑','ジャンプ',' nc-jump',function(v){J=v}));keys.appendChild(g1);keys.appendChild(g2);
-    body.appendChild(hud);body.appendChild(view);body.appendChild(keys);
-    body.appendChild(h('p','nc-how','◀ ▶ で移動、ジャンプで段差をこえよう(キーボードは ← → と スペース、変身中のボタンは X)。光るまりもでくっついて大きくなり、+3でバウンド、+5でスーパーボール(ボスを連続でふめる)、+8〜10でハイパーバウンド(ボスに2倍ダメージ)。+8になるとハサミが追いかけてくる。くるくる回ったら突進の合図、赤い線からにげよう。切られるとまりもが半分に。虹色のまりもを取ると20種類のどれかに変身! 変身中にダメージを受けると元にもどります。'));
+    g2.appendChild(kb);g2.appendChild(hold(opts.app?'ジャンプ':'ジャンプ! ↑','ジャンプ',' nc-jump',function(v){J=v}));keys.appendChild(g1);keys.appendChild(g2);
+    if(!opts.app)body.appendChild(hud);body.appendChild(view);body.appendChild(keys);
+    if(!opts.app)body.appendChild(h('p','nc-how','◀ ▶ で移動、ジャンプで段差をこえよう(キーボードは ← → と スペース、変身中のボタンは X)。光るまりもでくっついて大きくなり、+3でバウンド、+5でスーパーボール(ボスを連続でふめる)、+8〜10でハイパーバウンド(ボスに2倍ダメージ)。+8になるとハサミが追いかけてくる。くるくる回ったら突進の合図、赤い線からにげよう。切られるとまりもが半分に。虹色のまりもを取ると20種類のどれかに変身! 変身中にダメージを受けると元にもどります。'));
     document.addEventListener('keydown',onKey);document.addEventListener('keyup',onUp);
     view.addEventListener('pointerdown',function(){if(AC&&AC.state!=='running')try{AC.resume()}catch(e){}});keys.addEventListener('pointerdown',function(){if(!AC)aud();else if(AC.state!=='running')try{AC.resume()}catch(e){}});
   }
@@ -1038,7 +1060,7 @@ function game(cfg, root, opts){
     PF=null;return {cv:cv,destroy:function(){}}}
   reset();if(opts.app)go();
   if(opts.probe)opts.probe(function(){return{camY:camY,KD:KD,mk:mkEnemy,shots:shots,pl:pl,en:en,grid:grid,state:state,score:score,lives:lives,hs:hs,tf:tf,frz:frz,tstop:tstop,balls:balls,apply:function(id){applyTf(id)},skill:skill,TFS:TFS}});
-  return {cv:cv,redraw:reset,destroy:function(){alive=false;state='off';clearTimeout(bgT);document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onUp)}};
+  return {cv:cv,redraw:reset,destroy:function(){alive=false;state='off';window.removeEventListener('resize',fitView);clearTimeout(bgT);document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onUp)}};
 }
 
 
@@ -1162,15 +1184,14 @@ function portrait(box,o){var d=el('div');box.appendChild(d);game({w:4,h:4,map:[]
 /* ---------- title music (design data: home theme) ---------- */
 var HOME=[[523.25,.28],[659.25,.28],[783.99,.42],[659.25,.28],[587.33,.28],[659.25,.28],[523.25,.42],[392,.42],[440,.28],[523.25,.28],[659.25,.42],[587.33,.28],[523.25,.28],[440,.42],[392,.56]];
 var HM={on:false,t:0,i:0};
-function hmMuted(){try{return localStorage.getItem('marimo-mute')==='1'}catch(e){return false}}
-function hmCtx(){try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}try{var a=window.__mmAC||(window.__mmAC=new(window.AudioContext||window.webkitAudioContext)());if(a.state==='suspended')a.resume();return a}catch(e){return null}}
+function hmMuted(){return false}
+function hmCtx(){try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}try{var a=window.__mmAC||(window.__mmAC=new(window.AudioContext||window.webkitAudioContext)());if(a.state==='suspended')a.resume();return a}catch(e){return null}}
 function hmTone(a,f,d,w,v,at){var o=a.createOscillator(),g=a.createGain();o.type=w;o.frequency.value=f;g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(v,at+.02);g.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(g);g.connect(a.destination);o.start(at);o.stop(at+d+.03)}
 function hmPump(){if(!HM.on)return;var a=window.__mmAC;if(a&&!hmMuted()&&$('s-play').hidden){var now=a.currentTime;if(HM.t<now)HM.t=now+.05;
   while(HM.t<now+.4){var n=HOME[HM.i%HOME.length];try{hmTone(a,n[0],n[1]*.9+.05,'sine',.03,HM.t);if(HM.i%2===0)hmTone(a,n[0]*.75,n[1]*1.4,'triangle',.022,HM.t)}catch(e){}HM.i++;HM.t+=n[1]*1.1}}
   requestAnimationFrame(hmPump)}
 function hmStart(){if(HM.on)return;if(!hmCtx())return;HM.on=true;HM.t=0;requestAnimationFrame(hmPump)}
 document.addEventListener('pointerdown',function(){if(!hmMuted())hmStart();else hmCtx()},{passive:true});
-function sndLabel(){$('b-snd').textContent=hmMuted()?'♪ 音 OFF':'♪ 音 ON'}
 
 /* ---------- screens ---------- */
 var CUR=-1,WSEL=0,RUN=null;
@@ -1305,7 +1326,6 @@ function boot(){
   document.querySelectorAll('.back').forEach(function(b){b.onclick=function(){show('s-title');drawTitle()}});
   $('p-back').onclick=function(){show('s-map');drawMap()};
   $('d-close').onclick=function(){$('d-detail').hidden=true};
-  $('b-snd').onclick=function(){var m=!hmMuted();try{localStorage.setItem('marimo-mute',m?'1':'0')}catch(e){}sndLabel();if(!m)hmStart()};sndLabel();
   drawTitle();
 }
 boot();
