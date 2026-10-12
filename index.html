@@ -151,6 +151,11 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
 .eq i{font-style:normal;font-size:20px}.eq.on{outline:3px solid var(--gold);background:#fff8dc}
 .item.tool .itop{display:flex;gap:8px;align-items:center}.item.tool .iico{font-size:34px;line-height:1}.item.tool small{display:block;color:var(--sub);font-weight:700}.item.tool p{margin:0;font-size:13px}
 .rpic{width:min(100%,260px);margin:0 auto 6px;border-radius:18px;overflow:hidden}.rpic canvas{display:block;width:100%;height:auto}
+.testchip{background:#fff1c9;border:2px dashed #e0a800;color:#8a5a00;font-weight:900}
+.tbox{margin-top:10px;padding:10px;border-radius:14px;background:#fff8dc;border:2px dashed #e0a800;display:flex;flex-direction:column;gap:8px}
+.tbox .trow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.tbox b{font-size:13px;color:#8a5a00}
+.tbox button{border:0;border-radius:12px;padding:8px 12px;font-weight:900;background:#fff;box-shadow:0 3px 0 #e0c27a}
+.tbox button.on{outline:3px solid #e0a800;background:#ffe9a8}.tbox button.go{background:linear-gradient(180deg,#7fe08a,#2f9a4a);color:#fff;box-shadow:0 3px 0 #1f6e34}
 .shead{margin:20px 0 8px;font-size:18px;font-weight:900;color:var(--moss-d)}
 .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .item{background:#fff;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 0 #cde9de;min-width:0}
@@ -186,6 +191,7 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
           <span class="chip">💧 しずく貯金 <b id="t-bank"></b></span>
           <span class="chip">★ <b id="t-stars"></b></span>
           <span class="chip">🌈 図鑑 <b id="t-dex"></b></span>
+          <span class="chip testchip" id="t-test" hidden>🧪 テストモード</span>
         </div>
       </div>
       <div id="t-hero"></div>
@@ -1193,7 +1199,9 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     acc+=Math.min(.05,(t-last)/1000);last=t;
     while(acc>=1/120&&state==='play'){acc-=1/120;if(wp){warpStep(1/120)}else if(frz){frz.t+=1/120;if(frz.t>=1.8){var id=frz.id;frz=null;applyTf(id)}}else tick(1/120)}
     sync();draw();bgmPump();if(state==='play')requestAnimationFrame(frame)}
-  function go(){aud();reset();state='play';ov.hidden=true;bi=0;last=performance.now();skillBtn();requestAnimationFrame(frame);bgm()}
+  function testSetup(){if(opts.bossStart){var bz=en.filter(function(q){return q.boss})[0];if(bz){var ok=false;for(var ckx=Math.max(1,Math.floor(bz.x0-8));ckx>=1&&!ok;ckx--)for(var cky=1;cky<H;cky++)if(solid(grid[cky][ckx])){if(!solid(grid[cky-1][ckx])&&(cky<2||!solid(grid[cky-2][ckx]))){st0={x:ckx,y:cky-1};ok=true}break}spawn();en=en.filter(function(q){return q.boss||Math.abs(q.x-st0.x)>12})}}
+    for(var k=0;k<(opts.testLv||0);k++)addLump();lives=9;inv=2;if(opts.testTf)applyTf(opts.testTf);cam=Math.max(0,Math.min(W-VW,pl.x-VW*.4));camY=camC(pl.y-VH*.55)}
+  function go(){aud();reset();if(opts.testTf||opts.bossStart)testSetup();state='play';ov.hidden=true;bi=0;last=performance.now();skillBtn();requestAnimationFrame(frame);bgm()}
   ovB.onclick=go;rb.onclick=opts.app?go:reset;
   if(opts.onQuit){var qb=h('button','nc-mini','✕ やめる');qb.type='button';qb.onclick=function(){opts.onQuit()};tools.appendChild(qb)}
   function kk(e){return e.key.length===1?e.key.toLowerCase():e.key}
@@ -1415,6 +1423,7 @@ var CUR=-1,WSEL=0,RUN=null;
 function show(id){['s-title','s-map','s-play','s-dex','s-shop'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0);
   if(id!=='s-play'&&RUN){RUN.destroy();RUN=null;$('stage').textContent=''}}
 function drawTitle(){
+  $('t-test').hidden=!SV.test;
   $('t-bank').textContent=SV.bank;$('t-stars').textContent=starsTotal()+' / '+(OPEN*3);$('t-dex').textContent=dexCount()+' / 20';$('t-title').textContent=titleOf();
   var hb=$('t-hero');hb.textContent='';portrait(hb,{lv:Math.min(3,Math.floor(starsTotal()/20)),tf:null,f:1});
 }
@@ -1518,18 +1527,29 @@ function dexTab(t){DTAB=t;$('dt-m').classList.toggle('on',t==='m');$('dt-e').cla
 function drawDex(){
   $('d-h').firstChild.textContent='虹まりも図鑑 ';$('d-note').textContent='コースの虹色まりもを取ると、20種類のどれかに変身します。変身した虹まりもだけ、くわしく見られます。';
   var list=TFLIST,box=$('d-shelf');box.textContent='';$('d-count').textContent=dexCount()+' / 20';
-  for(var r=0;r<4;r++){var shelf=el('div','shelf');for(var c=0;c<5;c++){(function(d,no){var id=d[0],got=SV.dex[id],b=el('button','jar'+(got?' got':''));b.type='button';
+  for(var r=0;r<4;r++){var shelf=el('div','shelf');for(var c=0;c<5;c++){(function(d,no){var id=d[0],got=SV.dex[id]||(SV.test?{n:0}:null),b=el('button','jar'+(got?' got':''));b.type='button';
       b.appendChild(el('span','jno','No.'+(no<10?'0':'')+no));
       if(got){var pc=el('div','jimg');b.appendChild(pc);scene(pc,id);b.appendChild(el('span','jname',d[1]))}
       else{b.appendChild(el('span','jq','?'));b.appendChild(el('span','jname','???'))}
       b.onclick=function(){detail(d,no)};shelf.appendChild(b)})(list[r*5+c],r*5+c+1)}box.appendChild(shelf)}
   $('d-detail').hidden=true;
 }
-function detail(d,no){var id=d[0],got=SV.dex[id],box=$('d-detail');box.hidden=false;var pic=$('dd-pic');pic.textContent='';
+function detail(d,no){var id=d[0],got=SV.dex[id]||(SV.test?{n:0,first:'(テストモード)'}:null),box=$('d-detail');box.hidden=false;var pic=$('dd-pic');pic.textContent='';
   if(got){var pc=el('div','ddimg');pic.appendChild(pc);scene(pc,id,1);$('dd-name').textContent='No.'+no+' '+d[1];$('dd-desc').textContent=d[2]+(d[4]?'(ボタン「'+d[4]+'」)':'');
     $('dd-meta').textContent='変身した回数 '+got.n+'回 ・ はじめて出会ったコース '+got.first;$('dd-name').style.color='';$('dd-name').style.borderBottom='4px solid '+d[3]}
   else{pic.appendChild(el('span','jq big','?'));$('dd-name').textContent='No.'+no+' ???';$('dd-name').style.color='';$('dd-desc').textContent='まだ出会っていない虹まりも。コースの虹色まりもを取ると、変身してここに登録されます。';$('dd-meta').textContent=''}
+  if(SV.test){var tb=el('div','tbox');tb.appendChild(el('b',null,'🧪 テスト:この変身ですぐ遊ぶ'));var sr=el('div','trow');sr.appendChild(el('b',null,'まりもの大きさ'));
+    [0,5,10].forEach(function(lv){var b=el('button',TLV===lv?'on':'',lv?'+'+lv:'ふつう');b.type='button';b.onclick=function(){TLV=lv;detail(d,no)};sr.appendChild(b)});tb.appendChild(sr);
+    var gr=el('div','trow');[['コースでためす',0],['ボス戦でためす',1]].forEach(function(q){var b=el('button','go',q[0]);b.type='button';b.onclick=function(){playTest(id,q[1])};gr.appendChild(b)});tb.appendChild(gr);$('dd-meta').appendChild(tb)}
   box.scrollIntoView({block:'nearest',behavior:'smooth'})}
+var TLV=0,TEST=null;
+function playTest(id,boss){TEST={id:id,boss:boss};CUR=-1;show('s-play');$('result').hidden=true;var cfg=genCourse(boss?49:40);cfg.name=(boss?'ボス':'テスト')+' '+(TFI[id]?TFI[id][1]:id);
+  RUN=game(cfg,$('stage'),{app:1,bare:1,boost:{},skin:skinCols(),testTf:id,testLv:TLV,bossStart:!!boss,
+    onQuit:function(){TEST=null;show('s-dex');drawDex()},
+    onEnd:function(r){var box=$('result');box.hidden=false;var rp=$('r-pic');rp.textContent='';portrait(rp,{lv:0,scene:1,end:r.win?'clear':'over',face:r.win?'yay':'cry',t:1.4});
+      $('r-title').textContent=r.win?'テストクリア!':(r.title||'ゲームオーバー');$('r-sub').textContent='テストモードなので記録・しずく貯金・図鑑には残りません';$('r-stars').hidden=true;
+      $('r-score').textContent=r.score;$('r-shard').textContent=(r.shards||0)+' / '+(r.shardsAll||0);$('r-drops').textContent=r.got+' / '+r.all;$('r-bank').textContent='—';$('r-new').textContent='';
+      $('r-next').hidden=true;$('r-again').onclick=function(){playTest(id,boss)};$('r-map').onclick=function(){TEST=null;show('s-dex');drawDex()}}})}
 function drawShop(){
   $('s-bankv').textContent=SV.bank;var sk=$('sh-skins');sk.textContent='';
   SKINS.forEach(function(s){var own=!!SV.owned[s.id]||(s.dex&&dexCount()>=20),card=el('div','item skin'+(SV.skin===s.id?' on':''));var pic=el('div','ipic');card.appendChild(pic);portrait(pic,{lv:1,skin:s.c});
@@ -1561,6 +1581,7 @@ function boot(){
   document.querySelectorAll('.back').forEach(function(b){b.onclick=function(){show('s-title');drawTitle()}});
   $('p-back').onclick=function(){show('s-map');drawMap()};
   $('d-close').onclick=function(){$('d-detail').hidden=true};
+  var lt=0,lc=0;document.querySelector('.logo').addEventListener('click',function(){var n=Date.now();lc=n-lt<700?lc+1:1;lt=n;if(lc>=5){lc=0;SV.test=!SV.test;save();drawTitle()}});
   drawTitle();
 }
 boot();
