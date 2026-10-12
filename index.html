@@ -526,7 +526,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
   KD.o.n='こけもぐら';KD.g.n='あわコウモリ';KD.j.n='トゲむし';
   function mkEnemy(k,x,y){var K=KD[k],n={k:k,x:x+(1-K.w)/2,y:y+1-K.h-.01,w:K.w,h:K.h,vx:0,vy:0,d:-1,on:false,ph:x,zz:0,t:Math.random()*3,hp:K.hp||1,hide:0,cd:null};
     n.x0=n.x;n.y0=n.y;if(k==='z'){n.bt=cfg.bossType||'guard';n.boss=1;n.hp=n.hpMax=Math.max(3,+cfg.bossHp||3);n.yb=n.y;n.ph2='hover';n.pt=0;n.cd=1.5}if(K.ai==='mole')n.hide=1;if(K.ai==='leap'){n.y0=H-.2;n.y=n.y0;n.hide=1}return n}
-  function ai(n,dt){var K=KD[n.k],sm=espd/2.5,dxp=pl.x+pl.w/2-(n.x+n.w/2),dyp=pl.y+pl.h/2-(n.y+n.h/2);n.t+=dt;if(n.hit>0)n.hit-=dt;
+  function ai(n,dt){var K=KD[n.k],sm=espd/2.5,dxp=pl.x+pl.w/2-(n.x+n.w/2),dyp=pl.y+pl.h/2-(n.y+n.h/2);n.t+=dt;if(n.hit>0)n.hit-=dt;if(n.safe>0)n.safe-=dt;
     var grav=/walk|hop|still|shooter|mole|charge|puff|spring|slime/.test(K.ai);
     if(n.zz){if(grav){n.vx=0;move(n,dt)}return}
     if(n.ball){n.vx=n.d*9;if(move(n,dt))n.d=-n.d;n.bt-=dt;if(n.bt<=0)n.dead=1;return}
@@ -587,7 +587,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     if(combo)n.stun=1.2;else{n.stun=0;n.combo=0;n.ph2="hover";n.pt=0;if(lim>1&&n.hp>0)fx.push({x:n.x+n.w/2,y:n.y-1,t:1.2,txt:'ふりはらわれた!',small:1,red:1})}burst(n.x+n.w/2,n.y+n.h/2,'#86DDBA',20);tone(330,.12,'triangle');tone(500,.12,'triangle',.06,.1);shake=.25;
     if(n.hp<=0){en.splice(i,1);score+=pts*20;for(var k=0;k<4;k++)burst(n.x+Math.random()*n.w,n.y+Math.random()*n.h,k%2?'#B5F5E7':'#FFF5C8',16);fx.push({x:n.x+n.w/2,y:n.y-.4,t:2.2,txt:'まもりびとが道をあけてくれた!',small:1,col:'#318E9A'});fanfare()}}
   function stomp(i){var n=en[i];if(n.boss){bossHit(i,1);return}
-    if(n.hp>1){n.hp--;n.hit=.5;burst(n.x+n.w/2,n.y,'#ffcf9a',8);tone(260,.08,'triangle');return}
+    if(n.hp>1){n.hp--;n.hit=.5;n.safe=.4;burst(n.x+n.w/2,n.y,'#ffcf9a',8);tone(260,.08,'triangle');return}
     if(n.k==='k'){n.ball=1;n.d=(pl.x+pl.w/2<n.x+n.w/2?1:-1);n.bt=5;score+=pts;burst(n.x+n.w/2,n.y,'#c0c4cc',8);tone(200,.08,'triangle');return}
     kill(i)}
   function reset(){
@@ -735,8 +735,8 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
       if(n.ball){for(var bj=0;bj<en.length;bj++){var o2=en[bj];if(o2!==n&&!o2.ball&&!o2.dead&&!o2.hide&&hit(n,o2)){o2.dead=1;score+=pts;burst(o2.x+o2.w/2,o2.y+o2.h/2,'#c0c4cc',10);tone(170,.1,'triangle')}}continue}
       if(n.hide)continue;
       if(clone(n)){kill(i,'#7fe0c2');continue}
-      if(hit(pl,n)){
-        if(KD[n.k].st&&!n.big&&pl.vy>0&&pl.y+pl.h-n.y<.55){var wasB=n.boss;stomp(i);pl.vy=(jp?-17:-12)*(pl.lv>=5?1+(pl.lv-5)*.03:1);if(wasB&&pl.lv>=5)pl.vy=Math.max(pl.vy,-15);pl.af=airFace()}
+      if(hit(pl,n)&&!(n.safe>0&&pl.vy<=0)){
+        if(KD[n.k].st&&!n.big&&pl.vy>0&&pl.y+pl.h-n.y<.55){var wasB=n.boss;stomp(i);if(en[i]===n&&!wasB)pl.y=Math.min(pl.y,n.y-pl.h-.02);pl.vy=(jp?-17:-12)*(pl.lv>=5?1+(pl.lv-5)*.03:1);if(wasB&&pl.lv>=5)pl.vy=Math.max(pl.vy,-15);pl.af=airFace()}
         else if(is('fire')||dashing){kill(i,'#ff9a3c')}
         else if(n.boss&&(n.hit>0||n.ph2!=='dip'&&pl.y+pl.h<n.y+n.h*.5)){}
         else if(is('ice')&&!n.boss){var ix=Math.floor(n.x+.4),iy=Math.floor(n.y+.4);if(ix>=0&&ix<W&&iy>=0&&iy<H&&grid[iy][ix]==='.')grid[iy][ix]='I';en.splice(i,1);burst(n.x+.4,n.y+.4,'#bdeeff',14);tone(1600,.08,'triangle',.04);score+=pts}
