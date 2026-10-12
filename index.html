@@ -420,7 +420,7 @@ function game(cfg, root, opts){
   var AIR=['wow','yay','tongue','wink','surprised','cool','love','sleepy','angry','cry','excited','dizzy'];
   function airFace(){return AIR[Math.floor(Math.random()*Math.min(AIR.length,3+Math.ceil(pl.lv*1.15)))]}
   function say(t,red,small,col){fx.push({x:pl.x+pl.w/2,y:pl.y-(small?.2:.9),t:small?1.8:1.5,txt:t,red:red,small:small,col:col})}
-  function callScissors(){if(hs)return;hs={x:cam-1,y:Math.max(.5,pl.y-3),vx:0,vy:0,t:0,cool:0,sn:0,zz:0,m:'follow',mt:2,rot:0};
+  function callScissors(){if(hs||en.some(function(q){return q.boss&&q.met}))return;hs={x:cam-1,y:Math.max(.5,pl.y-3),vx:0,vy:0,t:0,cool:0,sn:0,zz:0,m:'follow',mt:2,rot:0};
     say('ハサミがきた!',1);if(opts.onSee)opts.onSee('sc');tone(220,.15,'sawtooth',.05);tone(180,.25,'sawtooth',.05,.15)}
   function popLumps(n,spd){while(n-->0&&pl.lv>0){var l=pl.lumps.pop(),r=(.42+.07*pl.lv)*l.s;pl.lv--;
       fx.push({x:pl.x+pl.w/2+Math.cos(l.a)*.4,y:pl.y+.2,vx:(Math.random()<.5?-1:1)*(spd+Math.random()*3),vy:-7-Math.random()*5,r:r,t:1.2,k:l.k})}resize()}
@@ -524,7 +524,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     case 'mole':n.vx=0;move(n,dt);n.cd=(n.cd==null?0:n.cd)-dt;if(n.cd<=0){if(n.hide){if(Math.abs(dxp)<4.5){n.hide=0;n.cd=1.4}else n.cd=.3}else{n.hide=1;n.cd=1.6}}break;
     case 'crow':if(!n.go){n.go=1;n.x=cam+VW-1.1;n.y=Math.max(.5,pl.y);n.d=-1;n.cw=.8;tone(700,.08,'square',.03)}if(n.cw>0){n.cw-=dt;n.y+=Math.sin(n.t*5)*dt*.8;break}n.x+=n.d*5.5*sm*dt;n.y+=Math.sin(n.t*5)*dt*.8;if(n.x<cam-3)n.dead=1;break;
     case 'drop':if(!n.fall&&Math.abs(dxp)<1.6&&dyp>0){n.fall=1;tone(500,.05,'square',.03)}if(n.fall){n.vx=0;move(n,dt);if(n.g){n.life=(n.life==null?2.5:n.life)-dt;if(n.life<=0)n.dead=1}}break;
-    case 'boss':if(!n.met){n.met=1;if(opts.onSee&&n.bt!=='guard')opts.onSee('z'+n.bt.charAt(0));bossIntro=2.4;shake=.5;var ckd=false;for(var ckx=Math.max(1,Math.floor(n.x0-7));ckx>=1&&!ckd;ckx--)for(var cky=1;cky<H;cky++)if(solid(grid[cky][ckx])){if(!solid(grid[cky-1][ckx])&&(cky<2||!solid(grid[cky-2][ckx]))){st0={x:ckx,y:cky-1};ckd=true}break}
+    case 'boss':if(!n.met){n.met=1;if(hs&&!hs.leave){hs.leave=1;hs.m='rest';fx.push({x:hs.x,y:hs.y-.8,t:1.4,txt:'ひえ〜っ!',small:1,col:'#5d6b78'});tone(900,.1,'square',.03);tone(600,.15,'square',.03,.1)}if(opts.onSee&&n.bt!=='guard')opts.onSee('z'+n.bt.charAt(0));bossIntro=2.4;shake=.5;var ckd=false;for(var ckx=Math.max(1,Math.floor(n.x0-7));ckx>=1&&!ckd;ckx--)for(var cky=1;cky<H;cky++)if(solid(grid[cky][ckx])){if(!solid(grid[cky-1][ckx])&&(cky<2||!solid(grid[cky-2][ckx]))){st0={x:ckx,y:cky-1};ckd=true}break}
         say('チェックポイント!',0,1,'#2f9a7a');tone(150,.5,'sawtooth',.06);tone(110,.7,'sawtooth',.06,.25);bi=0;nextT=0}
       if(bossIntro>0){n.y+=(n.yb-3.4-n.y)*Math.min(1,dt*2);break}
       if(n.stun>0){n.stun-=dt;n.t-=dt;n.warn=0;break}
@@ -699,7 +699,8 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     if(hurtT>0)hurtT-=dt;if(bossIntro>0)bossIntro-=dt;
     var kk=kami();if(kk&&!kamiOn){kamiOn=true;kamiT=2.4;shake=.4;tone(523,.15,'square',.05);tone(659,.15,'square',.05,.12);tone(784,.15,'square',.05,.24);tone(1047,.5,'square',.05,.36)}if(!kk)kamiOn=false;if(kamiT>0)kamiT-=dt;
     if(kamiOn&&Math.random()<dt*25)sp.push({x:pl.x+Math.random()*pl.w,y:pl.y+Math.random()*pl.h,vx:(Math.random()-.5)*2,vy:-2-Math.random()*2,t:.6,c:'hsl('+Math.floor(Math.random()*360)+',90%,65%)',r:3/32});
-    if(hs&&!stopped){var hx2=pl.x+pl.w/2-hs.x,hy2=pl.y+pl.h/2-hs.y,hd=Math.hypot(hx2,hy2)||1;hs.t+=dt;if(hs.zz>0)hs.zz-=dt;
+    if(hs&&hs.leave){hs.t+=dt;hs.rot=(hs.rot||0)+dt*14;hs.vx+=(-14-hs.vx)*Math.min(1,dt*3);hs.vy+=(-5-hs.vy)*Math.min(1,dt*3);hs.x+=hs.vx*dt;hs.y+=hs.vy*dt;if(hs.x<cam-3||hs.y<camY-3)hs=null}
+    else if(hs&&!stopped){var hx2=pl.x+pl.w/2-hs.x,hy2=pl.y+pl.h/2-hs.y,hd=Math.hypot(hx2,hy2)||1;hs.t+=dt;if(hs.zz>0)hs.zz-=dt;
       if(hs.cool>0){hs.cool-=dt;if(hs.m!=='rest'){hs.m='rest';hs.mt=0}}
       var hsp=BO.slow?8.5:10;
       if(hs.zz>0||hs.cool>0){hs.vx*=Math.pow(.05,dt);hs.vy*=Math.pow(.05,dt);if(hs.zz<=0&&hs.cool>0){hs.vx+=(-hx2/hd*2.5-hs.vx)*Math.min(1,dt*2);hs.vy+=(-Math.abs(hy2)/hd*1.5-hs.vy)*Math.min(1,dt*2)}}
