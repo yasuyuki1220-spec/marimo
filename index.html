@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,6 +23,9 @@
 body{margin:0;color:var(--ink);font-family:var(--round);background:radial-gradient(ellipse at 50% 0%,#F5FFFA 0,#dcf6ee 50%,#c3ecee 100%) fixed;background-color:#dcf6ee;min-height:100vh}
 button{font:inherit;cursor:pointer;color:inherit}
 html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+/* the page itself never scrolls or zooms (iPhone rotation used to leave it shifted); only the inner body scrolls */
+html{position:fixed;inset:0;width:100%;height:100%;overflow:hidden}
+body{position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
 @media (display-mode:standalone){.wrap{padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(40px + env(safe-area-inset-bottom))}}
 :focus-visible{outline:3px solid var(--warm);outline-offset:2px}
 .wrap{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:14px 40px}
@@ -156,6 +159,7 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
 .tbox .trow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.tbox b{font-size:13px;color:#8a5a00}
 .tbox button{border:0;border-radius:12px;padding:8px 12px;font-weight:900;background:#fff;box-shadow:0 3px 0 #e0c27a}
 .tbox button.on{outline:3px solid #e0a800;background:#ffe9a8}.tbox button.go{background:linear-gradient(180deg,#7fe08a,#2f9a4a);color:#fff;box-shadow:0 3px 0 #1f6e34}
+.ver{margin:10px 0 0;text-align:right;font-size:11px;color:#7fa8a0;font-weight:700}
 .shead{margin:20px 0 8px;font-size:18px;font-weight:900;color:var(--moss-d)}
 .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .item{background:#fff;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 0 #cde9de;min-width:0}
@@ -179,7 +183,7 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
 /* phone held sideways: everything fits without scrolling where possible */
 @media (orientation:landscape) and (max-height:560px){
   .wrap{padding-block:8px 16px;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
-  #s-title{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;min-height:calc(100vh - 24px)}
+  #s-title{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;min-height:calc(100dvh - 24px)}
   #s-title .hero{grid-template-columns:minmax(0,1fr) 130px;gap:8px;padding-block:0;text-align:left}
   #t-hero{max-width:130px;grid-row:auto}
   .logo{font-size:clamp(44px,13vh,66px);margin:2px 0}
@@ -228,6 +232,7 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
       <button type="button" id="b-dex"><b>図鑑</b><span>虹まりもと敵キャラが棚に並ぶ</span></button>
       <button type="button" id="b-shop"><b>ごほうび屋</b><span>しずくで色や強化と交換</span></button>
     </div>
+    <p class="ver">ver 1013-0916</p>
   </section>
 
   <section id="s-map" hidden>
@@ -1509,7 +1514,8 @@ document.addEventListener('visibilitychange',function(){var a=window.__mmAC;if(!
 
 /* ---------- screens ---------- */
 var CUR=-1,WSEL=0,RUN=null;
-function show(id){['s-title','s-map','s-play','s-dex','s-shop'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0);
+function resetScroll(){try{document.body.scrollTop=0;document.documentElement.scrollTop=0;window.scrollTo(0,0)}catch(e){}}
+function show(id){['s-title','s-map','s-play','s-dex','s-shop'].forEach(function(s){$(s).hidden=s!==id});resetScroll();
   if(id!=='s-play'&&RUN){RUN.destroy();RUN=null;$('stage').textContent=''}}
 function drawTitle(){
   $('t-test').hidden=!SV.test;
@@ -1658,6 +1664,8 @@ function drawShop(){
     card.appendChild(b);up.appendChild(card)});
 }
 /* stop iPhone copy/paste menus, text selection loupe and pinch/double-tap zoom from stealing the controls */
+function onRotate(){[0,120,400,900].forEach(function(d){setTimeout(function(){try{window.scrollTo(0,0);document.documentElement.scrollTop=0}catch(e){}},d)})}
+window.addEventListener('orientationchange',onRotate);window.addEventListener('resize',onRotate);
 ['contextmenu','selectstart','gesturestart','gesturechange','dblclick'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});
 document.addEventListener('touchend',function(){try{var sel=window.getSelection&&window.getSelection();if(sel&&sel.rangeCount)sel.removeAllRanges()}catch(e){}},{passive:true});
 if('serviceWorker' in navigator&&/^https:/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
