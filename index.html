@@ -176,6 +176,33 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-
   .detail{grid-template-columns:minmax(0,1fr);text-align:center}
   #dd-pic{margin:auto}
 }
+/* phone held sideways: everything fits without scrolling where possible */
+@media (orientation:landscape) and (max-height:560px){
+  .wrap{padding-block:8px 16px;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+  #s-title{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;min-height:calc(100vh - 24px)}
+  #s-title .hero{grid-template-columns:minmax(0,1fr) 130px;gap:8px;padding-block:0;text-align:left}
+  #t-hero{max-width:130px;grid-row:auto}
+  .logo{font-size:clamp(44px,13vh,66px);margin:2px 0}
+  .logo-sub{font-size:11px}
+  .stats{margin-top:6px;gap:6px;justify-content:flex-start}.stats .chip{font-size:12px;padding:3px 9px}
+  .rank{margin-top:4px;font-size:12px;padding:2px 10px}
+  .menu{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:0}
+  .menu button{padding:10px 14px}.menu b{font-size:17px}.menu span{font-size:12px}
+  .bar{margin-bottom:6px}.bar h2{font-size:18px}
+  .tabs{padding-bottom:2px}.tab{min-width:96px;padding:5px 10px}.tab span{font-size:13px}
+  .equip{margin:4px 0;padding:4px 8px}
+  .wtitle{margin:6px 0 0;font-size:19px}.wnote{margin:0 0 6px;font-size:12px}
+  .cgrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+  .course{padding:7px 8px;gap:1px}.cname{font-size:13px;min-height:2.4em}.cstars i{font-size:14px}.cbest{display:none}
+  #d-shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px}
+  .shelf+.shelf{margin-top:14px}.shelf{margin-top:14px;margin-bottom:16px}
+  .dtabs{margin:2px 0}.dtab{padding:6px}
+  .detail{grid-template-columns:200px minmax(0,1fr)!important;text-align:left!important}#dd-pic{margin:0!important}
+  .sgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .rcard{width:min(100%,640px);display:grid;grid-template-columns:200px minmax(0,1fr);column-gap:16px;align-items:center;padding:14px}
+  .rcard>*{grid-column:2}.rcard .rpic{grid-column:1;grid-row:1 / span 8;width:100%;margin:0}
+  .rcard h3{font-size:24px}.rstars{font-size:32px;margin:2px 0}
+}
 </style>
 </head>
 <body>
@@ -372,10 +399,12 @@ function game(cfg, root, opts){
     pzB.onpointerdown=function(e){e.preventDefault();e.stopPropagation();if(state!=='play')return;paused=true;state='pause';L=R=J=false;pzP.hidden=false;if(MX()&&MX().cur==='boss')MX().stop()}}
   function resume(){if(!paused)return;paused=false;pzP.hidden=true;state='play';last=performance.now();acc=0;requestAnimationFrame(frame);nextT=0;bgmPump()}
   function camC(v){return VH>=H?H-VH:Math.max(0,Math.min(H-VH,v))}
-  function fitView(){if(!opts.app||!alive)return;var aw=view.clientWidth,ah=view.clientHeight;if(!aw||!ah)return;
+  var lastWin='',fitT=[];
+  function fitView(){if(!opts.app||!alive)return;cv.style.width='0px';cv.style.height='0px';var aw=view.clientWidth,ah=view.clientHeight;lastWin=window.innerWidth+'x'+window.innerHeight;if(!aw||!ah)return;
     var nVW,nVH;if(aw<ah){nVW=Math.min(W,11);nVH=Math.max(12,Math.min(30,Math.round(nVW*ah/aw)))}else{nVH=Math.min(H,12);nVW=Math.min(W,Math.max(12,Math.min(26,Math.round(nVH*aw/ah))))}
     if(nVW!==VW||nVH!==VH){VW=nVW;VH=nVH;cv.width=VW*T;cv.height=VH*T;cw=cv.width;chh=cv.height;cam=Math.max(0,Math.min(W-VW,pl.x+pl.w/2-VW*.4));camY=camC(pl.y-VH*.55);if(state!=='play')draw()}var k=Math.min(aw/cv.width,ah/cv.height);cv.style.width=Math.floor(cv.width*k)+'px';cv.style.height=Math.floor(cv.height*k)+'px'}
-  if(opts.app){window.addEventListener('resize',fitView);requestAnimationFrame(function(){fitView();requestAnimationFrame(fitView)})}
+  function refit(){fitView();fitT.forEach(clearTimeout);fitT=[80,250,600,1100].map(function(d){return setTimeout(fitView,d)})}
+  if(opts.app){window.addEventListener('resize',refit);window.addEventListener('orientationchange',refit);if(window.visualViewport)window.visualViewport.addEventListener('resize',refit);requestAnimationFrame(function(){fitView();requestAnimationFrame(fitView)})}
 
   var shield=0,magT=0,spdT=0,lucky=0,bonusDrops=0,itemUsed=false,kamiT=0,kamiOn=false,bossIntro=0,camY=0,shots=[],goals=[],hs=null,hurtT=0,tf=null,frz=null,tstop=0,balls=[],stars=[],mg=[],trail=[],shake=0;
   var grid,pl,st0,en,fx,sp,score,lives,coins,coinsAll,left,sec,miss,state,hasGoal,cam,inv,flash,tacc,acc,last,pj,hudS='',best=0,el=0;
@@ -1254,6 +1283,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     cx.restore()}
   function frame(t){
     if(!alive||state!=='play')return;
+    if(opts.app&&lastWin&&window.innerWidth+'x'+window.innerHeight!==lastWin)refit();
     acc+=Math.min(.05,(t-last)/1000);last=t;
     while(acc>=1/120&&state==='play'){acc-=1/120;if(wp){warpStep(1/120)}else if(frz){frz.t+=1/120;if(frz.t>=1.8){var id=frz.id;frz=null;applyTf(id)}}else tick(1/120)}
     sync();draw();bgmPump();if(state==='play')requestAnimationFrame(frame)}
@@ -1325,7 +1355,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     PF=null;return {cv:cv,destroy:function(){}}}
   reset();if(opts.app)go();
   if(opts.probe)opts.probe(function(){return{camY:camY,KD:KD,mk:mkEnemy,shots:shots,pl:pl,en:en,grid:grid,state:state,score:score,lives:lives,hs:hs,tf:tf,frz:frz,tstop:tstop,balls:balls,apply:function(id){applyTf(id)},skill:skill,TFS:TFS,callHs:function(){callScissors()}}});
-  return {cv:cv,redraw:reset,destroy:function(){alive=false;state='off';if(MX()&&MX().cur==='boss')MX().stop();window.removeEventListener('resize',fitView);clearTimeout(bgT);document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onUp)}};
+  return {cv:cv,redraw:reset,destroy:function(){alive=false;state='off';if(MX()&&MX().cur==='boss')MX().stop();window.removeEventListener('resize',refit);window.removeEventListener('orientationchange',refit);if(window.visualViewport)window.visualViewport.removeEventListener('resize',refit);fitT.forEach(clearTimeout);clearTimeout(bgT);document.removeEventListener('keydown',onKey);document.removeEventListener('keyup',onUp)}};
 }
 
 
