@@ -749,6 +749,7 @@ var keep=en.filter(function(n){return n.boss});en.forEach(function(n){if(n.boss)
     if(hurtT>0)hurtT-=dt;if(bossIntro>0)bossIntro-=dt;
     var kmOn=kami();if(kmOn&&!kamiOn){kamiOn=true;kamiT=2.4;shake=.4;tone(523,.15,'square',.05);tone(659,.15,'square',.05,.12);tone(784,.15,'square',.05,.24);tone(1047,.5,'square',.05,.36)}if(!kmOn)kamiOn=false;if(kamiT>0)kamiT-=dt;
     if(kamiOn&&Math.random()<dt*25)sp.push({x:pl.x+Math.random()*pl.w,y:pl.y+Math.random()*pl.h,vx:(Math.random()-.5)*2,vy:-2-Math.random()*2,t:.6,c:'hsl('+Math.floor(Math.random()*360)+',90%,65%)',r:3/32});
+    if(hs&&!hs.leave&&pl.lv<5&&!(hs.ice>0)){hs.leave=1;hs.m='rest';fx.push({x:hs.x,y:hs.y-.8,t:1.6,txt:'ちいさくなったし、帰ろっと…',small:1,col:'#5d6b78'});tone(700,.1,'square',.03);tone(500,.15,'square',.03,.1)}
     if(hs&&hs.leave){hs.t+=dt;hs.rot=(hs.rot||0)+dt*14;hs.vx+=(-14-hs.vx)*Math.min(1,dt*3);hs.vy+=(-5-hs.vy)*Math.min(1,dt*3);hs.x+=hs.vx*dt;hs.y+=hs.vy*dt;if(hs.x<cam-3||hs.y<camY-3)hs=null}
     else if(hs&&hs.ice>0){hs.ice-=dt;if(hs.ice<=0){burst(hs.x,hs.y,'#bdeeff',18);tone(1200,.08,'square',.04);fx.push({x:hs.x,y:hs.y-.6,t:.8,txt:'パリーン!',small:1,col:'#39a7d9'});hs.m='follow';hs.mt=.8}}
     else if(hs&&!stopped){var hx2=pl.x+pl.w/2-hs.x,hy2=pl.y+pl.h/2-hs.y,hd=Math.hypot(hx2,hy2)||1;hs.t+=dt;if(hs.zz>0)hs.zz-=dt;
@@ -1561,7 +1562,7 @@ var FOES=[
   ['w','スライム','ぷるぷるの青いスライム。まりもを見つけると、ぴょこっと跳ねて近づいてくる。上からふめばたおせる。'],
   ['x','ゴーレム','火山の岩でできた大きなゴーレム。動きはゆっくりだけど、とてもかたい。3回ふむとくずれる。'],
   ['y','トリ','空をパトロールしている鳥。真下にまりもを見つけると、ななめに急降下してくる。'],
-  ['sc','ハサミ','大きくなりすぎたまりもはハサミでカットされてしまう。まりもが+8になるとあらわれる。くるくる回ったら突進の合図、赤い線の方向からにげよう。'],
+  ['sc','ハサミ','大きくなりすぎたまりもはハサミでカットされてしまう。まりもが+8になるとあらわれ、+5より小さくなると帰っていく。くるくる回ったら突進の合図、赤い線の方向からにげよう。'],
   ['zw','クジラ','海のくにのぬし。大きな水のかたまりと波で攻撃してくる。地面におりてきたところをふもう。'],
   ['zd','ドラゴン','火山のくにの火口にすむドラゴン。火の玉を吹き、着地すると炎の波がひろがる。'],
   ['zr','ロボット','未来のくにの研究所をまもるロボット。頭の葉っぱがチャームポイント。光の玉とレーザーの波で攻撃してくる。'],
