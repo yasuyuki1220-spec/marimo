@@ -258,7 +258,7 @@ body{position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow
       <button type="button" id="b-dex"><b>図鑑</b><span>虹まりもと敵キャラが棚に並ぶ</span></button>
       <button type="button" id="b-shop"><b>ごほうび屋</b><span>しずくで色や強化と交換</span></button>
     </div>
-    <p class="ver">ver 1013-1214</p>
+    <p class="ver">ver 1013-1225</p>
   </section>
 
   <section id="s-map" hidden>
@@ -1564,10 +1564,24 @@ function hmMuted(){return false}
 function hmCtx(){try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}try{var a=window.__mmAC||(window.__mmAC=new(window.AudioContext||window.webkitAudioContext)());if(a.state==='suspended')a.resume();return a}catch(e){return null}}
 function hmTone(a,f,d,w,v,at){var o=a.createOscillator(),g=a.createGain();o.type=w;o.frequency.value=f;g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(v,at+.02);g.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(g);g.connect(a.destination);o.start(at);o.stop(at+d+.03)}
 var SHOPM=[[784,.18],[659,.18],[784,.18],[1047,.36],[880,.18],[784,.18],[659,.36],[698,.18],[880,.18],[784,.18],[659,.18],[587,.36],[659,.18],[698,.18],[784,.18],[880,.18],[784,.18],[659,.18],[523,.36],[587,.18],[659,.18],[523,.54]],SB=[131,175,196,131],SH={t:0,i:0};
+/* original nostalgic 3/4 tune: flute-like lead over harp arpeggios, D major with a Mixolydian C natural */
+function mtof(m){return 440*Math.pow(2,(m-69)/12)}
+var HB=.62,HT_MEL=[[69,1],[74,1.5],[76,.5],[78,1],[76,1],[74,1],[76,1.5],[74,.5],[71,1],[69,3],[71,1],[74,1],[76,1],[78,1.5],[81,.5],[79,1],[78,1],[76,1],[72,1],[74,3],
+  [81,1.5],[79,.5],[78,1],[79,1],[78,1],[76,1],[74,1],[76,.5],[78,.5],[81,1],[71,3],[67,1],[71,1],[74,1],[76,1.5],[78,.5],[76,1],[74,1],[72,1],[69,1],[74,3]],
+  HT_CH=[[50,57,62,66],[50,57,62,66],[43,50,55,59],[45,52,57,61],[43,50,55,59],[50,57,62,66],[48,55,60,64],[50,57,62,66],[50,57,62,66],[43,50,55,59],[47,54,59,62],[43,50,55,59],[40,47,52,55],[45,52,57,61],[48,55,60,64],[50,57,62,66]],
+  HT={t:0,mi:0,bar:0,bt:0,on:false};
+function hVoice(a,f,at,dur,type,vol,att){try{var o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(vol,at+att);g.gain.setTargetAtTime(.0001,at+Math.max(att,dur*.7),dur*.35);o.connect(g);g.connect(a.destination);o.start(at);o.stop(at+dur*1.6+.1)}catch(e){}}
+function homeTheme(a){var now=a.currentTime;if(!HT.on||HT.t<now-.5){HT.on=true;HT.t=now+.08;HT.mi=0;HT.bt=now+.08;HT.bar=0}
+  while(HT.t<now+.6){var n=HT_MEL[HT.mi%HT_MEL.length],f=mtof(n[0]),d=n[1]*HB;hVoice(a,f,HT.t,d,'sine',.06,.06);hVoice(a,f*2,HT.t,d*.8,'sine',.008,.08);hVoice(a,f*1.003,HT.t+.01,d,'triangle',.018,.08);HT.t+=d;HT.mi++}
+  while(HT.bt<now+.6){var ch=HT_CH[HT.bar%HT_CH.length],t0=HT.bt;hVoice(a,mtof(ch[0]),t0,HB*3,'triangle',.05,.02);
+    [1,2,3,2,3,2].forEach(function(k,j){hVoice(a,mtof(ch[k]+12),t0+j*HB/2,HB*1.2,'triangle',.018,.005)});HT.bt+=HB*3;HT.bar++}}
 function hmPump(){if(!HM.on)return;var a=window.__mmAC,home=$('s-play').hidden;
+  if(a&&a.state!=='running'){try{a.resume()}catch(e){}}
+  if(a&&home&&$('s-shop').hidden&&!hmMuted()){if(typeof MMX!=='undefined'&&(MMX.cur==='home'||MMX.cur==='over'))MMX.stop();if(a.state==='running')homeTheme(a);requestAnimationFrame(hmPump);return}
+  HT.on=false;
   if(a&&!$('s-shop').hidden){if(typeof MMX!=='undefined'&&MMX.cur==='home')MMX.stop();var now2=a.currentTime;if(SH.t<now2)SH.t=now2+.05;
     while(SH.t<now2+.4){var n2=SHOPM[SH.i%SHOPM.length];try{hmTone(a,n2[0],n2[1]*.7,'square',.022,SH.t);hmTone(a,n2[0]*2,n2[1]*.25,'sine',.01,SH.t);if(SH.i%2===0){hmTone(a,SB[Math.floor(SH.i/6)%4],.3,'triangle',.05,SH.t);hmTone(a,3000,.03,'square',.006,SH.t+n2[1]/2)}}catch(e){}SH.i++;SH.t+=n2[1]}
-    requestAnimationFrame(hmPump);return}if(a&&typeof MMX!=='undefined'){MMX.init();if(MMX.ok('home')){if(home){if(MMX.cur!=='home')MMX.play('home',true,.55)}else if(MMX.cur==='home')MMX.stop();requestAnimationFrame(hmPump);return}}
+    requestAnimationFrame(hmPump);return}if(a&&typeof MMX!=='undefined'){MMX.init();if(MMX.cur==='home')MMX.stop();}
   if(a&&!hmMuted()&&home){var now=a.currentTime;if(HM.t<now)HM.t=now+.05;
   while(HM.t<now+.4){var n=HOME[HM.i%HOME.length];try{hmTone(a,n[0],n[1]*.9+.05,'sine',.05,HM.t);hmTone(a,n[0]*2,n[1]*.5,'sine',.012,HM.t);if(HM.i%2===0)hmTone(a,n[0]/2,n[1]*1.6,'triangle',.04,HM.t)}catch(e){}HM.i++;HM.t+=n[1]*1.1}}
   requestAnimationFrame(hmPump)}
@@ -1609,7 +1623,7 @@ function drawEquip(){var box=$('m-equip');if(!box)return;box.textContent='';var 
   own.forEach(function(q){var b=el('button','eq'+(SV.equip===q.id?' on':''));b.type='button';b.appendChild(el('i',null,q.icon));b.appendChild(el('b',null,'×'+SV.items[q.id]));b.title=q.name;b.onclick=function(){SV.equip=q.id;save();drawEquip()};box.appendChild(b)})}
 function play(idx){CUR=idx;show('s-play');var cfg=genCourse(idx);$('p-name').textContent=cfg.name;$('result').hidden=true;
   var found=[];
-  var eq=SV.equip&&(SV.items[SV.equip]||0)>0?itemOf(SV.equip):null,bo=boost(),carry=SV.carry&&SV.carry.idx===idx?SV.carry.lv:0,km=!!(SV.rw3&&SV.kamiOn);if(carry>(bo.lv||0))bo.lv=carry;
+  var eq=SV.equip&&(SV.items[SV.equip]||0)>0?itemOf(SV.equip):null,bo=boost(),carry=SV.rw1&&SV.carry&&SV.carry.idx===idx?SV.carry.lv:0,km=!!(SV.rw3&&SV.kamiOn);if(carry>(bo.lv||0))bo.lv=carry;
   RUN=game(cfg,$('stage'),{app:1,bare:1,boost:bo,skin:skinCols(),item:eq?{id:eq.id,icon:eq.icon,name:eq.name,count:SV.items[eq.id]||0}:null,
     onRefund:function(id){SV.items[id]=(SV.items[id]||0)+1;save()},onPick:function(cb){openPicker(cb)},kamiStart:km,crown:km,startMsg:km?'👑 まりも神スタート!':carry>=2?'まりも力 +'+carry+' 引きつぎ!':'',
     onStock:function(id,o){var had=SV.items[id]||0;SV.items[id]=had+1;var msg=null;if(id==='rainbow'&&o&&o.kami&&had>=10&&!SV.goldOpen){SV.goldOpen=1;msg='🌟 金まりもが ごほうび屋に登場!'}save();return msg},
@@ -1622,10 +1636,10 @@ function play(idx){CUR=idx;show('s-play');var cfg=genCourse(idx);$('p-name').tex
 function result(idx,cfg,r,found){
   var st=0;if(r.win){st=1;if(r.all===0||r.got/r.all>=.6)st=2;if(r.got>=r.all)st=3}
   var prev=SV.stars[idx]||0,gain=r.got*(r.lucky?2:1)+(r.bonus||0)+(r.win?10+st*5:0)+(r.shards||0)*10,newBest=r.win&&r.score>(SV.best[idx]||0);
-  if(r.win){SV.clear[idx]=1;SV.stars[idx]=Math.max(prev,st);if(newBest)SV.best[idx]=r.score;SV.carry=(r.lv>=2&&idx<59)?{idx:idx+1,lv:r.lv}:null}
+  if(r.win){SV.clear[idx]=1;SV.stars[idx]=Math.max(prev,st);if(newBest)SV.best[idx]=r.score;SV.carry=(SV.rw1&&r.lv>=2&&idx<59)?{idx:idx+1,lv:r.lv}:null}
   SV.bank+=gain;SV.plays++;SV.total+=r.score;save();
   setTimeout(checkRewards,900);
-  if(r.win&&r.lv>=2&&idx<59)setTimeout(function(){var s2=$('r-sub');if(s2)s2.textContent=(s2.textContent?s2.textContent+' ':'')+'次のコースはまりも力 +'+r.lv+' でスタート!'},10);
+  if(SV.rw1&&r.win&&r.lv>=2&&idx<59)setTimeout(function(){var s2=$('r-sub');if(s2)s2.textContent=(s2.textContent?s2.textContent+' ':'')+'次のコースはまりも力 +'+r.lv+' でスタート!'},10);
   var rp=$('r-pic');rp.textContent='';portrait(rp,{lv:0,scene:1,end:r.win?'clear':'over',face:r.win?'yay':'cry',t:1.4});
   var box=$('result');box.hidden=false;$('r-title').textContent=r.win?'ステージクリア!':(r.title||'ゲームオーバー');
   $('r-sub').textContent=r.win?(newBest?'ベスト更新!':'')+(st>prev?' 星が増えた!':''):(r.sub||'もう一度チャレンジしよう!');
@@ -1740,7 +1754,7 @@ window.addEventListener('orientationchange',onRotate);window.addEventListener('r
 document.addEventListener('touchend',function(){try{var sel=window.getSelection&&window.getSelection();if(sel&&sel.rangeCount)sel.removeAllRanges()}catch(e){}},{passive:true});
 if('serviceWorker' in navigator&&/^https:/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
 function checkRewards(){var msgs=[];
-  if(!SV.rw1&&allClear()){SV.rw1=1;SV.bank+=1000;save();msgs.push({t:'🏆 全コースクリア!',l:['ひみつのワールド「ひみつの星降る湖」が出現!','しずく貯金 +1000','称号「まりもマスター」']})}
+  if(!SV.rw1&&allClear()){SV.rw1=1;SV.bank+=1000;save();msgs.push({t:'🏆 全コースクリア!',l:['ひみつのワールド「ひみつの星降る湖」が出現!','まりも力の引きつぎ解放!+2以上でクリアすると、次のコースをその大きさで始められる','しずく貯金 +1000','称号「まりもマスター」']})}
   if(!SV.rw3&&all3()){SV.rw3=1;SV.kamiOn=true;SV.bank+=5000;save();msgs.push({t:'👑 全コース ★3 達成!!',l:['「まりも神スタート」解放!どのコースも まりも+10&虹まりも変身の まりも神 で始められる(コース選びでON/OFF)','まりも神のときは金の王冠つき','しずく貯金 +5000','称号「伝説のまりも神」']})}
   if(msgs.length)showReward(msgs)}
 function showReward(msgs){var box=$('reward');if(!box)return;var m=msgs.shift();$('rw-title').textContent=m.t;var ul=$('rw-list');ul.textContent='';m.l.forEach(function(x){ul.appendChild(el('li',null,x))});
